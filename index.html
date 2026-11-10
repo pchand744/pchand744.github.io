@@ -695,6 +695,7 @@
       <nav aria-label="Main navigation">
         <a href="#about">About</a>
         <a href="#research">Research</a>
+        <a href="simulations.html">Simulations</a>
         <a href="#publications">Publications</a>
         <a href="#cv">CV</a>
         <a href="#contact">Contact</a>
@@ -965,7 +966,7 @@
     <script>
       document.getElementById('print-cv').addEventListener('click', () => window.print());
 
-      const navigation = Array.from(document.querySelectorAll('nav a'), link => ({
+      const navigation = Array.from(document.querySelectorAll('nav a[href^="#"]'), link => ({
         link,
         section: document.querySelector(link.hash)
       }));

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An illustrated presentation of Chand and Molla’s mobile-agent algorithms for constructing a minimal dominating set and electing a leader.">
+  <title>Linear-time domination and leader election · Paper presentation</title>
+  <style>
+    :root { color-scheme: light; --ink:#102c41; --blue:#155ac7; --muted:#486070; --line:#cddbe3; --light:#edf4f9; --red:#a6362c; --serif:Georgia,'Times New Roman',serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:#f6f8fa; font:16px/1.55 Arial,Helvetica,sans-serif; }
+    header,main { width:min(1160px,100%); margin:auto; padding-inline:clamp(18px,5vw,60px); }
+    header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-block:20px; }
+    a { color:var(--blue); text-underline-offset:4px; } header a { text-decoration:none; font-weight:650; } header a:first-child { color:var(--ink); }
+    header a:hover, footer a:hover { text-decoration:underline; }
+    a:focus-visible,button:focus-visible,select:focus-visible { outline:3px solid #e18c27; outline-offset:3px; }
+    main { padding-bottom:30px; }
+    .slide { padding:clamp(24px,5vw,60px); min-height:clamp(490px,63vh,670px); background:white; border:1px solid var(--line); border-top:4px solid var(--blue); display:flex; flex-direction:column; justify-content:center; gap:20px; }
+    .slide + .slide { margin-top:20px; } .ready .slide + .slide { margin-top:0; } [hidden] { display:none !important; }
+    .kicker { color:var(--blue); font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.12em; }
+    h1,h2,h3,p,figure,ol,ul { margin:0; }
+    h1,h2 { font:400 clamp(2.05rem,4.6vw,3.9rem)/1.08 var(--serif); letter-spacing:-.042em; text-wrap:balance; }
+    h1 { font-size:clamp(2.25rem,5vw,4.2rem); } h3 { font-size:1.05rem; line-height:1.32; }
+    .lead { max-width:64ch; color:var(--muted); font-size:clamp(1.03rem,1.7vw,1.24rem); }
+    .duo { display:grid; grid-template-columns:1.1fr 1fr; align-items:center; gap:clamp(20px,4vw,50px); }
+    .stack { display:grid; gap:18px; } .stack p { color:var(--muted); margin-top:4px; } .byline { font-weight:650; }
+    .byline small { display:block; color:var(--muted); font-weight:400; font-size:.91rem; margin-top:3px; }
+    .inset { background:var(--light); padding:clamp(16px,3vw,32px); border-radius:4px; }
+    .night { background:var(--ink); color:white; } .night p { color:#e1eef7; }
+    .formula { display:block; font:400 clamp(1.85rem,4vw,3.5rem)/1.2 var(--serif); letter-spacing:-.045em; }
+    .pair { display:grid; grid-template-columns:1fr 1fr; gap:24px; } .fact { padding-top:14px; border-top:2px solid var(--ink); }
+    .fact p { color:var(--muted); margin-top:7px; }
+    .chips { display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-weight:650; }
+    .chips b { padding:7px 13px; background:#fff; border:1px solid var(--line); border-radius:3px; }
+    .node { border-radius:50%; width:33px; height:33px; display:inline-grid; place-items:center; border:2px solid #fff; color:var(--ink); background:#d6e8f5; font-size:13px; font-weight:700; }
+    .nodes { display:flex; flex-wrap:wrap; gap:4px; margin:7px 0 15px; }
+    .nodes.seek .node { background:#efb85b; } .route { font-size:1.12rem; letter-spacing:.02em; }
+    .route b { color:var(--blue); } .footnote { color:var(--muted); font-size:.87rem; }
+    .demo { background:var(--light); padding:14px 20px; border-radius:4px; }
+    .demo svg { display:block; width:100%; height:auto; max-height:205px; }
+    .edge { stroke:#849cab; stroke-width:3; } .v circle { fill:#fff; stroke:#788c9b; stroke-width:2; } .v text { text-anchor:middle; dominant-baseline:central; fill:var(--ink); font:bold 17px Arial,sans-serif; }
+    .v.selected circle { fill:var(--red); stroke:var(--red); } .v.covered circle { fill:#1e5da9; stroke:#1e5da9; }
+    .v.selected text,.v.covered text { fill:#fff; }
+    .v.current circle { stroke:#102c41; stroke-width:5; }
+    figcaption { font-size:.85rem; margin-top:8px; color:var(--muted); }
+    button,select { font:inherit; color:var(--ink); }
+    button,select,.buttonlink { background:#fff; border:1px solid #adbfcd; border-radius:4px; padding:8px 13px; min-height:42px; }
+    button,.buttonlink { cursor:pointer; font-weight:650; } button:disabled { opacity:.45; cursor:default; } button:not(:disabled):hover,.buttonlink:hover { border-color:var(--blue); }
+    .controls { display:flex; align-items:center; flex-wrap:wrap; gap:7px; }
+    .buttonlink { display:inline-flex; align-items:center; width:fit-content; text-decoration:none; }
+    .primary,.buttonlink { background:var(--ink); border-color:var(--ink); color:#fff; }
+    .proof { border-left:3px solid #af4138; padding-left:14px; } .proof + .proof { border-color:#2c6bad; }
+    .tools { padding:15px 0; justify-content:space-between; align-items:center; display:none; gap:12px; flex-wrap:wrap; }
+    .ready .tools { display:flex; } .count { font-variant-numeric:tabular-nums; color:var(--muted); font-size:.85rem; }
+    .progress { height:3px; background:#cedbe5; } .progress span { display:block; height:100%; background:var(--blue); }
+    .demo-tools { display:none; } .ready .demo-tools { display:flex; }
+    .sr { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    @media(max-width:720px) {
+      .duo,.pair { grid-template-columns:1fr; gap:18px; } .slide { min-height:0; } .demo svg { max-height:170px; }
+      .tools { align-items:flex-start; } .formula { font-size:2rem; } header { padding-block:13px; }
+    }
+    @media print {
+      body { background:white; font-size:11pt; } header,.tools,.progress,.demo-tools { display:none!important; } main { width:auto; padding:0; }
+      .slide,.slide[hidden] { display:flex!important; min-height:0; padding:22px 0; break-after:page; border:0; } .slide:last-of-type { break-after:auto; }
+      .night { background:white; color:var(--ink); } .night p { color:var(--ink); } .inset { border:1px solid var(--line); }
+      .duo,.pair { grid-template-columns:1fr 1fr; } a { color:var(--ink); } .v { print-color-adjust:exact; }
+    }
+  </style>
+</head>
+<body>
+  <header><a href="simulations.html">← Simulations</a><a href="tcs-simulator.html">Open simulator ↗</a></header>
+  <main>
+    <div class="progress" aria-hidden="true"><span id="progress"></span></div>
+    <article aria-label="Paper presentation">
+      <section class="slide" id="paper" data-name="The paper">
+        <p class="kicker">Theoretical Computer Science · 2026</p>
+        <h1>Linear-time dominating set construction and leader election using mobile agents</h1>
+        <p class="lead">How can agents choose a set that reaches every vertex when they can only talk by meeting at the same vertex?</p>
+        <p class="byline">Prabhat Kumar Chand and Anisur Rahaman Molla <small>Volume 1086 · Article 116245</small></p>
+      </section>
+      <section class="slide" id="model" data-name="The mobile-agent model">
+        <p class="kicker">The model · Section 1.1</p>
+        <h2>All memory travels with the agents.</h2>
+        <div class="duo">
+          <div class="stack">
+            <div><h3>The network</h3><p>A simple, connected, undirected graph has <i>n</i> anonymous, memoryless vertices. Each vertex numbers its own incident ports.</p></div>
+            <div><h3>The team</h3><p>There are exactly <i>n</i> mobile agents. Each carries a distinct polynomially bounded ID. An agent sees its local ports and can exchange information with agents at its location.</p></div>
+          </div>
+          <div class="inset stack"><h3>One synchronous round</h3><div class="chips"><b>Meet</b><span>→</span><b>Compute</b><span>→</span><b>Move</b></div><p>An agent may cross one edge or stay in place. The agents begin without knowing the graph size or its maximum degree.</p></div>
+        </div>
+      </section>
+      <section class="slide" id="cover" data-name="Cover the graph">
+        <p class="kicker">Rooted start · Sections 2–3</p>
+        <h2>Reserve a team to probe the neighbours.</h2>
+        <div class="duo">
+          <div class="stack">
+            <div><h3>Build a covered configuration</h3><p>Starting together, the agents explore in depth-first order. Explorers settle or periodically visit nearby vacant vertices. A waiting agent meets a representative within six rounds.</p></div>
+            <div><h3>Return the seekers to the root</h3><p>The ⌈<i>n</i>/3⌉ seekers inspect ports in parallel. Even a vertex of degree <i>n</i> − 1 needs at most three probe batches.</p></div>
+          </div>
+          <div class="inset night"><h3>Example team of six</h3><p>Four explorers</p><div class="nodes" aria-hidden="true"><span class="node">E</span><span class="node">E</span><span class="node">E</span><span class="node">E</span></div><p>Two seekers</p><div class="nodes seek" aria-hidden="true"><span class="node">S</span><span class="node">S</span></div><p>At a vertex with five ports, the two seekers can check them in batches of 2, 2 and 1.</p></div>
+        </div>
+      </section>
+      <section class="slide" id="example" data-name="A worked colouring example">
+        <p class="kicker">Worked example · Algorithm 2</p>
+        <h2>Choose red when no neighbour is red.</h2>
+        <div class="duo">
+          <div class="stack"><p>The seekers colour the root red, then inspect each new vertex in depth-first order. A red neighbour makes the new vertex blue. Otherwise it joins the red set.</p>
+            <p>On this five-vertex star, a leaf root selects all four leaves. A centre root selects just the centre. Both sets are inclusion-minimal.</p>
+            <div class="controls demo-tools"><label for="root">Start at</label><select id="root"><option value="leaf">Leaf A</option><option value="centre">Centre B</option></select></div>
+          </div>
+          <figure class="demo"><svg viewBox="0 0 300 176" role="img" aria-labelledby="star-title"><title id="star-title">A star with centre B joined to leaves A, C, D and E</title>
+            <path class="edge" fill="none" d="M150 87 L65 34 M150 87 L235 34 M150 87 L235 141 M150 87 L65 141"/>
+            <g class="v selected" data-v="A" transform="translate(65 34)"><circle r="19"/><text>A</text></g>
+            <g class="v covered" data-v="B" transform="translate(150 87)"><circle r="19"/><text>B</text></g>
+            <g class="v selected" data-v="C" transform="translate(235 34)"><circle r="19"/><text>C</text></g>
+            <g class="v selected" data-v="D" transform="translate(235 141)"><circle r="19"/><text>D</text></g>
+            <g class="v selected" data-v="E" transform="translate(65 141)"><circle r="19"/><text>E</text></g>
+          </svg><figcaption>Letters identify vertices for this example. The agents use local ports.</figcaption>
+          <div class="controls demo-tools" style="margin-top:12px"><button id="step-back" type="button" aria-label="Previous colouring decision">−</button><button id="step-next" type="button">Next decision</button></div>
+          <p id="decision" aria-live="polite" style="margin-top:8px">Selected vertices: A, C, D, E.</p></figure>
+        </div>
+      </section>
+      <section class="slide" id="minimality" data-name="Why the output is minimal">
+        <p class="kicker">Correctness · Theorem 3.4</p>
+        <h2>Every selected vertex is indispensable.</h2>
+        <div class="pair">
+          <div class="fact"><h3>Domination</h3><p>A blue vertex was coloured only after a seeker found a red neighbour. Red vertices keep their colour, so that neighbour still covers it at termination.</p></div>
+          <div class="fact"><h3>Minimality</h3><p>Two adjacent vertices cannot both be red. The later one would see the earlier one. Removing any red vertex therefore leaves that vertex itself undominated.</p></div>
+        </div>
+        <div class="inset"><h3>Make the virtual colours permanent</h3><p>During a final tree traversal, seekers occupy the remaining vacant vertices and inherit their recorded colours. Each of the <i>n</i> agents now stores the membership of one vertex.</p></div>
+      </section>
+      <section class="slide" id="arbitrary" data-name="From arbitrary starts to a leader">
+        <p class="kicker">Arbitrary start · Algorithms 3–6</p>
+        <h2>Turn many starting points into one root.</h2>
+        <div class="stack">
+          <div class="fact"><h3>Disperse and detect completion</h3><p>Clusters grow depth-first trees. A singleton uses its ID bits to alternate between waiting and visiting a fixed port. Trees probe for edges leading outside their component and merge when they meet.</p></div>
+          <div class="fact"><h3>Elect and gather</h3><p>Once the surviving tree finishes its search for an external edge, its root becomes leader. Agents store tree pointers, finalise dispersion and gather from leaves upward. Each internal agent waits for all child groups before moving to its parent.</p></div>
+          <div class="fact"><h3>Run the rooted construction</h3><p>All agents are together at the leader. They can now build the covered configuration, colour the graph and settle the seekers using Algorithm 2.</p></div>
+        </div>
+      </section>
+      <section class="slide" id="bounds" data-name="Round and memory bounds">
+        <p class="kicker">Complexity · Theorems 3.4, 4.7 and 4.9</p>
+        <h2>Why the time bound is linear</h2>
+        <div class="pair">
+          <div class="inset night"><span class="formula">O(<i>n</i>)</span><h3>synchronous rounds</h3><p>The rooted procedure uses a constant number of tree traversals. A bounded number of probe batches and a bounded wait at each covered vertex keep the colouring cost constant per visit.</p></div>
+          <div class="inset"><span class="formula">O(log <i>n</i>)</span><h3>bits per agent</h3><p>An agent stores its ID, a bounded number of tree ports and local state. An oscillating explorer carries colour records for only a constant number of vertices.</p></div>
+        </div><p class="footnote">For an arbitrary start, the paper also bounds dispersion with termination detection, leader election, tree construction and gathering by O(<i>n</i>) rounds in total.</p>
+      </section>
+      <section class="slide" id="approximation" data-name="The approximate minimum set">
+        <p class="kicker">Approximate minimum dominating set · Section 5</p>
+        <h2>To control the size, change the selection rule.</h2>
+        <div class="duo"><div class="stack">
+          <div><h3>Count the gain</h3><p>A vertex’s span counts the still-undominated vertices it could cover, including itself. A candidate compares spans within two hops, breaking ties consistently by ID.</p></div>
+          <div><h3>Choose how to communicate</h3><p>The leader learns <i>n</i>, maximum degree Δ and maximum ID λ. It chooses between repeated neighbour meetings and four seeker traversals per greedy phase.</p></div>
+        </div><div class="inset stack"><h3>The size guarantee</h3><p>The charging proof bounds the output size by <i>H</i><sub>Δ+1</sub> times optimum, where <i>H</i><sub>k</sub> = 1 + ½ + … + 1/<i>k</i>. This gives the paper’s logarithmic approximation.</p><h3>O(min{<i>n</i>², <i>n</i>Δ log λ}) rounds</h3><p>Memory remains O(log <i>n</i>) bits per agent.</p></div></div>
+      </section>
+      <section class="slide" id="explore" data-name="Explore the algorithm">
+        <p class="kicker">Explore the construction</p><h2>Which vertices does the root choice select?</h2>
+        <p class="lead">Try different roots on the same graph. Track the first red neighbour that explains each blue decision, then check whether every red vertex is necessary.</p>
+        <a class="buttonlink" href="tcs-simulator.html">Open the interactive simulator →</a>
+        <div class="fact"><h3>Read the paper</h3><p>Prabhat Kumar Chand and Anisur Rahaman Molla. <i>Linear-time dominating set construction and leader election using mobile agents.</i> Theoretical Computer Science 1086 (2026), article 116245. <a href="https://doi.org/10.1016/j.tcs.2026.116245">Publisher’s article</a></p></div>
+      </section>
+    </article>
+    <nav class="tools" aria-label="Presentation controls">
+      <div class="controls"><label class="sr" for="slide-menu">Choose a slide</label><select id="slide-menu"></select></div>
+      <div class="controls"><button id="prev" type="button">← Previous</button><span class="count" id="count" aria-live="polite"></span><button id="next" class="primary" type="button">Next →</button></div>
+    </nav>
+  </main>
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const menu = document.getElementById('slide-menu');
+    const previous = document.getElementById('prev');
+    const next = document.getElementById('next');
+    let current = 0;
+    for (const [i, slide] of slides.entries()) {
+      menu.add(new Option((i + 1) + '. ' + slide.dataset.name, slide.id));
+    }
+    function displaySlide(index) {
+      current = Math.min(slides.length - 1, Math.max(0, index));
+      slides.forEach((slide, i) => { slide.hidden = i !== current; });
+      menu.value = slides[current].id;
+      previous.disabled = current === 0;
+      next.disabled = current === slides.length - 1;
+      document.getElementById('count').textContent = (current + 1) + ' / ' + slides.length;
+      document.getElementById('progress').style.width = ((current + 1) * 100 / slides.length) + '%';
+    }
+    function fromAddress() {
+      displaySlide(slides.findIndex(slide => slide.id === location.hash.slice(1)));
+    }
+    function navigate(index) {
+      if (!slides[index] || index === current) return;
+      history.pushState(null, '', '#' + slides[index].id);
+      displaySlide(index);
+      window.scrollTo(0, 0);
+    }
+    menu.addEventListener('change', () => navigate(menu.selectedIndex));
+    previous.addEventListener('click', () => navigate(current - 1));
+    next.addEventListener('click', () => navigate(current + 1));
+    window.addEventListener('hashchange', fromAddress);
+    window.addEventListener('popstate', fromAddress);
+    document.addEventListener('keydown', event => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey ||
+          event.target.closest('select, input, textarea, [contenteditable]')) return;
+      const target = { ArrowLeft: current - 1, ArrowRight: current + 1, Home: 0, End: slides.length - 1 }[event.key];
+      if (target !== undefined) { event.preventDefault(); navigate(target); }
+    });
+
+    // In a star, the hub is the only neighbour of each leaf.
+    const adjacent = { A:['B'], B:['A','C','D','E'], C:['B'], D:['B'], E:['B'] };
+    const root = document.getElementById('root');
+    const backward = document.getElementById('step-back');
+    const forward = document.getElementById('step-next');
+    let decisions = 0;
+    function drawExample() {
+      const order = root.value === 'leaf' ? ['A','B','C','D','E'] : ['B','A','C','D','E'];
+      const selected = new Set();
+      const seen = order.slice(0, decisions);
+      const last = seen[seen.length - 1];
+      let message = 'Before colouring: all five vertices are undecided.';
+      for (const v of seen) {
+        const witness = adjacent[v].find(w => selected.has(w));
+        if (!witness) selected.add(v);
+        message = witness ? v + ' is blue: neighbour ' + witness + ' is already red.'
+          : v + (v === order[0] ? ' is the root and becomes red.' : ' has no red neighbour and becomes red.');
+      }
+      if (decisions) message += ' Selected: ' + Array.from(selected).join(', ') + '.';
+      for (const node of document.querySelectorAll('[data-v]')) {
+        const v = node.dataset.v;
+        node.classList.toggle('selected', selected.has(v));
+        node.classList.toggle('covered', seen.includes(v) && !selected.has(v));
+        node.classList.toggle('current', last === v);
+      }
+      document.getElementById('decision').textContent = message;
+      backward.disabled = decisions === 0;
+      forward.disabled = decisions === order.length;
+    }
+    root.addEventListener('change', () => { decisions = 0; drawExample(); });
+    backward.addEventListener('click', () => { decisions--; drawExample(); });
+    forward.addEventListener('click', () => { decisions++; drawExample(); });
+    fromAddress();
+    drawExample();
+    document.body.classList.add('ready');
+  </script>
+</body>
+</html>

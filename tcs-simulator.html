@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Step through Prabhat Kumar Chand and Anisur Rahaman Molla’s mobile-agent algorithm for constructing a minimal dominating set.">
+  <title>Mobile-agent simulator · Prabhat Kumar Chand</title>
+  <style>
+    :root { --ink:#102c41; --muted:#4c6575; --line:#d1dee3; --accent:#075f64; --paper:#fff; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--paper); font:16px/1.55 Arial,Helvetica,sans-serif; }
+    a { color:var(--accent); text-underline-offset:4px; }
+    :focus-visible { outline:3px solid #cd6706; outline-offset:4px; }
+    .skip { position:absolute; left:1rem; top:-90px; background:white; padding:10px; }
+    .skip:focus { top:8px; }
+    header,main,footer { max-width:1200px; margin:auto; padding-inline:clamp(16px,4vw,40px); }
+    header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding-block:20px; border-bottom:1px solid var(--line); }
+    header a { color:var(--ink); font-size:.93rem; font-weight:600; }
+    header .back { text-decoration:none; }
+    main { padding-block:clamp(32px,5vw,62px); }
+    h1,h2,p { margin:0; }
+    h1 { font:400 clamp(2.5rem,6vw,4.8rem)/1.02 Georgia,serif; letter-spacing:-.046em; max-width:950px; }
+    .intro { color:var(--muted); margin:14px 0 28px; max-width:750px; }
+    .settings { display:flex; align-items:end; flex-wrap:wrap; gap:12px 16px; padding-block:16px 20px; border-top:1px solid var(--line); }
+    label { display:grid; gap:5px; font-size:.82rem; font-weight:700; }
+    select,button { font:inherit; color:var(--ink); }
+    select { min-height:42px; border:1px solid #a9bbc3; border-radius:5px; background:#fff; padding:6px 9px; font-size:.95rem; }
+    .workbench { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    .panels { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(245px,1fr); }
+    .plot { display:flex; flex-direction:column; min-width:0; background:#eff6f4; }
+    .meta { display:flex; justify-content:space-between; gap:8px; padding:18px 20px 4px; color:#36575a; font-size:.86rem; flex-wrap:wrap; }
+    .meta strong { color:var(--ink); }
+    #network { display:block; width:100%; flex:1; min-height:200px; }
+    #network text { font-family:Arial,Helvetica,sans-serif; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px 14px; padding:4px 20px 17px; font-size:.78rem; color:#35504f; }
+    .legend span { display:inline-flex; align-items:center; gap:6px; }
+    .symbol { width:12px; height:12px; display:inline-block; border-radius:50%; }
+    .red { background:#aa3b27; border-radius:3px; }
+    .blue { background:#22689e; }
+    .neutral { background:white; border:1.5px solid #547276; }
+    .trace { border-left:1px solid var(--line); padding:clamp(17px,2vw,28px); display:flex; flex-direction:column; }
+    #phase { font:600 .79rem/1.4 Arial,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+    h2 { font:400 clamp(1.6rem,3vw,2.2rem)/1.08 Georgia,serif; letter-spacing:-.025em; }
+    #detail { margin:12px 0 20px; font-size:.97rem; color:var(--muted); }
+    .stats { margin:auto 0 0; }
+    .stats div { display:flex; justify-content:space-between; gap:12px; border-top:1px solid var(--line); padding:7px 0; font-size:.84rem; }
+    .stats dt { color:var(--muted); }
+    .stats dd { margin:0; text-align:right; font-weight:600; }
+    .controls { border-top:1px solid var(--line); padding:17px 20px; display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+    button { padding:8px 14px; min-height:42px; background:white; border:1px solid #a9bbc3; border-radius:5px; cursor:pointer; font-size:.9rem; font-weight:600; }
+    button:hover:enabled { border-color:var(--accent); background:#eef6f5; }
+    button:disabled { color:#667681; border-color:#dbe2e5; background:#f5f7f8; cursor:default; }
+    #play { background:var(--accent); border-color:var(--accent); color:white; min-width:72px; }
+    #play:hover:enabled { background:#03494e; }
+    .scrub { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-left:auto; font-weight:500; }
+    input[type=range] { accent-color:var(--accent); min-height:28px; width:clamp(100px,14vw,190px); }
+    output { min-width:5.5em; font-variant-numeric:tabular-nums; }
+    #checks { margin-top:16px; padding:14px 18px; background:#edf5ee; color:#244e35; border-left:3px solid #438051; }
+    details { border-block:1px solid var(--line); padding:16px 0; margin-top:24px; color:var(--muted); max-width:950px; }
+    summary { color:var(--ink); cursor:pointer; font-weight:bold; }
+    details p { margin-top:10px; }
+    footer { margin-bottom:30px; font-size:.85rem; color:var(--muted); }
+    @media(max-width:760px) {
+      .panels { grid-template-columns:1fr; }
+      .trace { border-left:none; border-top:1px solid var(--line); }
+      .scrub { width:100%; margin-left:0; }
+      .scrub input { flex:1; }
+      .controls { gap:8px; }
+      #network { min-height:160px; }
+    }
+    @media(max-width:420px) {
+      .settings { gap:8px; }
+      .settings label { flex:1 1 115px; }
+      .settings select { width:100%; }
+      .controls { padding:12px; }
+      button { padding-inline:10px; }
+      header { gap:10px; }
+    }
+  </style>
+  <script defer src="tcs-engine.js"></script>
+  <script defer src="tcs-singletons.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to simulator</a>
+  <header>
+    <a class="back" href="simulations.html">← Simulations</a>
+    <a href="tcs-presentation.html">Paper presentation</a>
+  </header>
+  <main id="main">
+    <h1>Mobile-agent simulator</h1>
+    <p class="intro">Follow a team of mobile agents as they construct a minimal dominating set. Change the graph or starting configuration and step through their decisions.</p>
+    <noscript><p>Enable JavaScript to run the simulator, or <a href="tcs-presentation.html">open the presentation</a>.</p></noscript>
+    <div class="settings">
+      <label>Graph<select id="topology"></select></label>
+      <label>Starting configuration<select id="start"><option value="rooted">All agents at one root</option><option value="clusters">Two agent clusters</option></select></label>
+      <label><span id="root-label">Root</span><select id="root"></select></label>
+    </div>
+    <div class="workbench">
+      <div class="panels">
+        <section class="plot" aria-label="Graph diagram">
+          <div class="meta"><strong id="graph-name"></strong><span id="graph-size"></span></div>
+          <svg id="network" viewBox="0 0 640 300" role="img" aria-labelledby="graph-title graph-description"></svg>
+          <div class="legend"><span><i class="symbol neutral"></i>Uncoloured</span><span><i class="symbol red"></i>Selected</span><span><i class="symbol blue"></i>Dominated, unselected</span></div>
+        </section>
+        <section class="trace" aria-label="Event explanation">
+          <p id="phase"></p><h2 id="event-title"></h2><p id="detail"></p>
+          <dl class="stats">
+            <div><dt>Red set D</dt><dd id="red-set"></dd></div>
+            <div><dt>Vertices dominated</dt><dd id="dominated"></dd></div>
+            <div><dt>Agents</dt><dd id="agents"></dd></div>
+          </dl>
+        </section>
+      </div>
+      <div class="controls">
+        <button id="play" type="button">Play</button>
+        <button id="previous" type="button">Back</button><button id="next" type="button">Step</button><button id="reset" type="button">Reset</button>
+        <label class="scrub" for="timeline">Event<input id="timeline" type="range" min="1" value="1"><output id="position" for="timeline"></output></label>
+      </div>
+    </div>
+    <p id="checks" hidden></p>
+    <details>
+      <summary>How to read this simulation</summary>
+      <p>Letters identify vertices for the reader. The agents work on anonymous vertices with locally numbered ports. The drawing uses alphabetical neighbour order to fix one possible port ordering. A dark ring marks the current vertex, dashed lines show a probe or a gathering move, and small badges count agents.</p>
+      <p>The colouring follows Algorithm 2. The root turns red. Each subsequent vertex is processed on its first DFS visit. Groups of at most ⌈n/3⌉ seekers check all its neighbours. A seeker may wait up to six rounds to meet an oscillating representative. Colour decisions use all graph edges, including edges outside the DFS tree.</p>
+      <p>In the two-cluster example, the chosen root specifies an illustrative outcome of Algorithm 4. Cluster dispersion, mergers and the external-edge termination test are summarized. Gathering then executes the bottom-up rule in Algorithm 5 before Algorithm 6 invokes rooted colouring. Coverage, oscillations, travel and final settlement are grouped into events. The timeline measures these events; the paper’s O(n) round bound and O(log n) agent memory bound describe the distributed protocol.</p>
+    </details>
+    <tcs-singletons></tcs-singletons>
+  </main>
+  <footer>Prabhat Kumar Chand and Anisur Rahaman Molla · <a href="https://doi.org/10.1016/j.tcs.2026.116245">Theoretical Computer Science, 2026</a></footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const { graphs, label, buildRun } = TcsSimulation;
+      const byId = id => document.getElementById(id);
+      const topology = byId('topology'), root = byId('root'), start = byId('start');
+      const svg = byId('network'), timeline = byId('timeline');
+      let run, current = 0, timer = null;
+      for (const [id, graph] of Object.entries(graphs)) topology.add(new Option(graph.name, id));
+      function fillRoots() {
+        root.replaceChildren();
+        graphs[topology.value].points.forEach((_, i) => root.add(new Option(label(i), i)));
+      }
+      function element(tag, attrs, text) {
+        const item = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (const [name, value] of Object.entries(attrs)) item.setAttribute(name, value);
+        if (text !== undefined) item.textContent = text;
+        svg.append(item);
+        return item;
+      }
+      function draw(graph, frame, red) {
+        svg.replaceChildren();
+        element('title', { id:'graph-title' }, graph.name + ' — ' + frame.title);
+        element('desc', { id:'graph-description' }, 'Current red set: ' + (red.map(label).join(', ') || 'empty') + '. ' + frame.detail);
+        for (const [u, v] of graph.edges) {
+          const onTree = frame.tree && (run.parent[u] === v || run.parent[v] === u);
+          const probing = (u === frame.focus && frame.probes.includes(v)) || (v === frame.focus && frame.probes.includes(u));
+          const gathering = (frame.moves || []).some(([a,b]) => (a === u && b === v) || (a === v && b === u));
+          const [x1,y1] = graph.points[u], [x2,y2] = graph.points[v];
+          element('line', { x1,y1,x2,y2, stroke:probing || gathering ? '#056a65' : onTree ? '#577a7b' : '#aec6c5',
+            'stroke-width':probing || gathering ? 5 : onTree ? 3.5 : 2, 'stroke-dasharray':probing || gathering ? '8 5' : 'none' });
+        }
+        graph.points.forEach(([x,y], i) => {
+          const colour = frame.colours[i];
+          if (frame.focus === i) element('circle', { cx:x,cy:y,r:26,fill:'none',stroke:'#173f45','stroke-width':2.4 });
+          if (colour === 'red') element('rect', { x:x-17,y:y-17,width:34,height:34,rx:7,fill:'#aa3b27',stroke:'#7a2a20','stroke-width':2 });
+          else element('circle', { cx:x,cy:y,r:18,fill:colour === 'blue' ? '#22689e' : '#fff',stroke:colour === 'blue' ? '#1b5076' : '#547276','stroke-width':2.5 });
+          element('text', { x,y:y+6,'text-anchor':'middle','font-size':17,'font-weight':700,fill:colour === 'neutral' ? '#163a40' : '#fff' }, label(i));
+          if (frame.counts && frame.counts[i]) {
+            element('circle', { cx:x+16,cy:y-18,r:10.5,fill:'#173f45',stroke:'#fff','stroke-width':1.5 });
+            element('text', { x:x+16,y:y-14,'text-anchor':'middle',fill:'white','font-size':11,'font-weight':700 }, frame.counts[i]);
+          }
+        });
+      }
+      function render() {
+        const graph = graphs[topology.value], frame = run.frames[current];
+        const red = frame.colours.flatMap((c,i) => c === 'red' ? [i] : []);
+        const covered = run.neighbours.filter((adj,i) => red.includes(i) || adj.some(v => red.includes(v))).length;
+        byId('phase').textContent = frame.phase;
+        byId('event-title').textContent = frame.title;
+        byId('detail').textContent = frame.detail;
+        byId('red-set').textContent = red.length ? '{' + red.map(label).join(', ') + '}' : '∅';
+        byId('dominated').textContent = covered + ' / ' + graph.points.length;
+        byId('agents').textContent = graph.points.length;
+        byId('graph-name').textContent = graph.name;
+        byId('graph-size').textContent = graph.points.length + ' vertices · ' + graph.edges.length + ' edges';
+        byId('position').textContent = (current + 1) + ' of ' + run.frames.length;
+        timeline.max = run.frames.length;
+        timeline.value = current + 1;
+        byId('previous').disabled = current === 0;
+        byId('next').disabled = current + 1 === run.frames.length;
+        byId('play').textContent = timer !== null ? 'Pause' : frame.done ? 'Replay' : 'Play';
+        byId('checks').hidden = !frame.done;
+        const verified = Object.values(run.checks).every(Boolean);
+        byId('checks').textContent = verified ? 'Verified on this graph: every vertex is dominated, no two selected vertices share an edge, and removing any selected vertex breaks domination.' : 'A correctness check failed.';
+        draw(graph, frame, red);
+      }
+      function pause() { clearInterval(timer); timer = null; }
+      function go(index) { pause(); current = index; render(); }
+      function rebuild() {
+        pause();
+        current = 0;
+        byId('root-label').textContent = start.value === 'clusters' ? 'Surviving root (example)' : 'Root';
+        run = buildRun(graphs[topology.value], Number(root.value), start.value);
+        render();
+      }
+      topology.addEventListener('change', () => { fillRoots(); rebuild(); });
+      root.addEventListener('change', rebuild);
+      start.addEventListener('change', rebuild);
+      byId('next').addEventListener('click', () => go(Math.min(current + 1, run.frames.length - 1)));
+      byId('previous').addEventListener('click', () => go(Math.max(current - 1, 0)));
+      byId('reset').addEventListener('click', () => go(0));
+      timeline.addEventListener('input', () => go(Number(timeline.value) - 1));
+      byId('play').addEventListener('click', () => {
+        if (timer !== null) { pause(); render(); return; }
+        if (current === run.frames.length - 1) current = 0;
+        timer = setInterval(() => {
+          current++;
+          if (current === run.frames.length - 1) pause();
+          render();
+        }, 1400);
+        render();
+      });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(); render(); } });
+      fillRoots();
+      rebuild();
+    });
+  </script>
+</body>
+</html>

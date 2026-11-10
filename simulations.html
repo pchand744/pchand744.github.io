@@ -37,6 +37,34 @@
         letter-spacing: -0.04em;
       }
       main p { margin: 0; color: #526476; }
+      .paper { margin-top: 42px; border-top: 2px solid #102c41; padding-top: 28px; }
+      .journal { color: #155ac7; font-size: 14px; font-weight: 600; }
+      .paper h2 {
+        max-width: 850px;
+        margin: 10px 0;
+        font: 400 clamp(28px, 3.3vw, 44px)/1.14 Georgia, serif;
+        letter-spacing: -0.025em;
+        text-wrap: balance;
+      }
+      .paper-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 28px; }
+      .paper-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        border: 1px solid #cbd7e2;
+        border-radius: 12px;
+        padding: clamp(24px, 3.4vw, 40px);
+        color: #102c41;
+        background: #f2f6fa;
+        text-decoration: none;
+      }
+      .paper-card:hover { border-color: #155ac7; }
+      .paper-card:hover .card-title { text-decoration: underline; }
+      .paper-card svg { width: 100%; height: 100px; margin-bottom: 26px; }
+      .card-title { font: 400 clamp(25px, 2.7vw, 36px)/1.2 Georgia, serif; }
+      .card-detail { margin-top: 9px; font-size: 16px; }
+      .lab { color: white; background: #102c41; border-color: #102c41; }
+      @media (max-width: 680px) { .paper-links { grid-template-columns: 1fr; } }
       footer { padding: 24px 40px 32px; border-top: 1px solid #d6dfe7; color: #526476; font-size: 12px; }
       .skip { position: absolute; left: 12px; top: -100px; background: white; padding: 8px; }
       .skip:focus { top: 8px; }
@@ -63,7 +91,35 @@
     </header>
     <main id="main" tabindex="-1">
       <h1>Simulations</h1>
-      <p>No simulations have been added yet.</p>
+      <section class="paper" aria-labelledby="tcs-title">
+        <p class="journal">Theoretical Computer Science · 2026</p>
+        <h2 id="tcs-title">Linear-time dominating set construction and leader election using mobile agents</h2>
+        <p>Prabhat Kumar Chand and Anisur Rahaman Molla · <a href="https://doi.org/10.1016/j.tcs.2026.116245">Published paper</a></p>
+        <div class="paper-links">
+          <a class="paper-card" href="tcs-presentation.html">
+            <svg viewBox="0 0 240 100" aria-hidden="true" focusable="false">
+              <g stroke="#90a8ba" stroke-width="2" fill="#fff">
+                <rect x="67" y="6" width="118" height="72" rx="3"/>
+                <rect x="60" y="13" width="118" height="72" rx="3"/>
+                <rect x="53" y="20" width="118" height="72" rx="3"/>
+              </g>
+              <path d="M65 36h76m-76 9h48" stroke="#102c41" stroke-width="3"/>
+              <path d="M77 69h64" stroke="#98aabe" stroke-width="2"/>
+              <g stroke="#102c41" stroke-width="2"><circle cx="77" cy="69" r="6" fill="#bc5147"/><circle cx="109" cy="69" r="6" fill="#a7c8ea"/><circle cx="141" cy="69" r="6" fill="#bc5147"/></g>
+            </svg>
+            <span class="card-title">HTML presentation <span aria-hidden="true">→</span></span>
+            <span class="card-detail">Follow the model, a worked example, and the paper’s results.</span>
+          </a>
+          <a class="paper-card lab" href="tcs-simulator.html">
+            <svg viewBox="0 0 240 100" aria-hidden="true" focusable="false">
+              <path d="M44 50 92 20 146 35 193 65 127 84 83 70 44 50M92 20 83 70 146 35 127 84" fill="none" stroke="#809bad" stroke-width="2.5"/>
+              <g stroke="#d4e4ed" stroke-width="2"><g fill="#9ac6ed"><circle cx="44" cy="50" r="8"/><circle cx="83" cy="70" r="8"/><circle cx="146" cy="35" r="8"/><circle cx="127" cy="84" r="8"/></g><g fill="#ef9686"><circle cx="92" cy="20" r="9"/><circle cx="193" cy="65" r="9"/></g></g>
+            </svg>
+            <span class="card-title">Interactive simulator <span aria-hidden="true">→</span></span>
+            <span class="card-detail">Step through the graph and watch the dominating set take shape.</span>
+          </a>
+        </div>
+      </section>
     </main>
     <footer>© 2026 Prabhat Kumar Chand</footer>
   </body>
